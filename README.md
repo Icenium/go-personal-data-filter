@@ -1,4 +1,5 @@
 # go-personal-data-filter
+[![GoDoc](https://godoc.org/github.com/Icenium/go-personal-data-filter/filter?status.svg)](https://godoc.org/github.com/Icenium/go-personal-data-filter/filter)
 
 ## Contents
 - [Installation](#installation)
