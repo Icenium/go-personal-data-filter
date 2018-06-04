@@ -141,5 +141,58 @@ func TestPersonalDataFilterBuilder(t *testing.T) {
 				So(b.additionalPersonalDataProperties, ShouldHaveLength, 0)
 			})
 		})
+
+		Convey("WithDefaultMatchReplacer", func() {
+			Convey("Should set the default match replacer.", func() {
+				f, err := NewBuilder().WithDefaultMatchReplacer().Build()
+
+				So(err, ShouldBeNil)
+
+				res := f.RemovePersonalData("email@mail.com")
+
+				So(res, ShouldResemble, "3d13579f08e876d2d2d94da15ea657fb39795dd2a59e3378c9e58c4f4b0d053b")
+			})
+			Convey("Should fail if there is custom match replacer set.", func() {
+				_, err := NewBuilder().
+					WithMatchReplacer(func(string) string { return "" }).
+					WithDefaultMatchReplacer().
+					Build()
+
+				So(err, ShouldBeError, errCantAddDefaultMatchReplacer)
+			})
+			Convey("Should not add the default match replacer if there is builder error.", func() {
+				b := NewBuilder()
+				b.err = errCantAddDefaultMatchReplacer
+				b = b.WithDefaultMatchReplacer()
+				So(b.defaultMatchReplacer, ShouldBeNil)
+			})
+		})
+
+		Convey("WithMatchReplacer", func() {
+			Convey("Should set the custom match replacer.", func() {
+				expected := "expected"
+				f, err := NewBuilder().WithMatchReplacer(func(string) string { return expected }).Build()
+
+				So(err, ShouldBeNil)
+
+				res := f.RemovePersonalData("email@mail.com")
+
+				So(res, ShouldResemble, expected)
+			})
+			Convey("Should fail if the default match replacer set.", func() {
+				_, err := NewBuilder().
+					WithDefaultMatchReplacer().
+					WithMatchReplacer(func(string) string { return "" }).
+					Build()
+
+				So(err, ShouldBeError, errCantAddCustomMatchReplacer)
+			})
+			Convey("Should not add the custom match replacer if there is builder error.", func() {
+				b := NewBuilder()
+				b.err = errCantAddDefaultMatchReplacer
+				b = b.WithMatchReplacer(func(string) string { return "" })
+				So(b.matchReplacer, ShouldBeNil)
+			})
+		})
 	})
 }

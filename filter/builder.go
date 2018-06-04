@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"regexp"
@@ -24,6 +25,8 @@ var (
 
 	errRegExpAndAdditionalRegExp   = errors.New("can't use WithAdditionalRegularExpressions and WithRegExp at the same time")
 	errPDPropsAndAdditionalPDProps = errors.New("can't use WithPersonalDataProperties and WithAdditionalPersonalDataProperties at the same time")
+	errCantAddDefaultMatchReplacer = errors.New("can't add default match replacer after a custom one is set")
+	errCantAddCustomMatchReplacer  = errors.New("can't add custom match replacer after the default one is set")
 )
 
 // PersonalDataFilterBuilder builds personal data filter
@@ -34,6 +37,8 @@ type PersonalDataFilterBuilder struct {
 	additionalRegExps                []string
 	personalDataProperties           []string
 	additionalPersonalDataProperties []string
+	matchReplacer                    *MatchReplacer
+	defaultMatchReplacer             *MatchReplacer
 	err                              error
 }
 
@@ -109,6 +114,39 @@ func (b *PersonalDataFilterBuilder) WithAdditionalPersonalDataProperties(props .
 	return b
 }
 
+// WithMatchReplacer sets the match replacer of the filter.
+func (b *PersonalDataFilterBuilder) WithMatchReplacer(replacer MatchReplacer) *PersonalDataFilterBuilder {
+	if b.err != nil {
+		return b
+	}
+
+	if b.defaultMatchReplacer != nil {
+		b.err = errCantAddCustomMatchReplacer
+		return b
+	}
+
+	b.matchReplacer = &replacer
+	return b
+}
+
+// WithDefaultMatchReplacer sets the match replacer of the filter to the default one.
+func (b *PersonalDataFilterBuilder) WithDefaultMatchReplacer() *PersonalDataFilterBuilder {
+	if b.err != nil {
+		return b
+	}
+
+	if b.matchReplacer != nil {
+		b.err = errCantAddDefaultMatchReplacer
+		return b
+	}
+
+	var defaultReplacer MatchReplacer = func(match string) (replaced string) {
+		return fmt.Sprintf("%x", sha256.Sum256([]byte(match)))
+	}
+	b.defaultMatchReplacer = &defaultReplacer
+	return b
+}
+
 // Build creates new personal data filter from the provided configuration.
 func (b *PersonalDataFilterBuilder) Build() (PersonalDataFilter, error) {
 	if b.err != nil {
@@ -146,6 +184,13 @@ func (b *PersonalDataFilterBuilder) Build() (PersonalDataFilter, error) {
 		res.personalDataProperties = b.personalDataProperties
 	} else {
 		res.personalDataProperties = append(personalDataProperties, b.additionalPersonalDataProperties...)
+	}
+
+	// Handle match replacer config
+	if b.defaultMatchReplacer != nil {
+		res.matchReplacer = b.defaultMatchReplacer
+	} else if b.matchReplacer != nil {
+		res.matchReplacer = b.matchReplacer
 	}
 
 	return res, nil

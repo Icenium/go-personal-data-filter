@@ -1,6 +1,7 @@
 package filter
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"reflect"
 	"strings"
@@ -167,6 +168,19 @@ func TestPersonalDataFilter(t *testing.T) {
 				checkTestCases(filter, []testCase{
 					{Input: "487818704899480c907e2c0549664116", Expected: "487818704899480c907e2c0549664116"},
 				})
+			})
+			Convey("Should hash the personal data when the default match replacer is provided.", func() {
+				testCases := []testCase{
+					createTestCaseWithReplacer(getHash, "%s%s", email, guid),
+					createTestCaseWithReplacer(getHash, "text%stext %s", guid, email),
+					createTestCaseWithReplacer(getHash, "%s %s %s %s", guid, email, guid, email),
+					createTestCaseWithReplacer(getHash, "%s %stext%s %s", email, guid, guid, email),
+					createTestCaseWithReplacer(getHash, "text%stext", ip),
+					createTestCaseWithReplacer(getHash, "text%stext", ipV6),
+				}
+
+				hashFilter, _ := NewBuilder().WithDefaultMatchReplacer().Build()
+				checkTestCases(hashFilter, testCases)
 			})
 		})
 
@@ -359,6 +373,10 @@ func TestPersonalDataFilter(t *testing.T) {
 	})
 }
 
+func getHash(input string) string {
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(input)))
+}
+
 func fillPersonalDataStruct(t reflect.Type, str reflect.Value, value string) {
 	for i := 0; i < t.NumField(); i++ {
 		f := str.Elem().Field(i)
@@ -370,6 +388,18 @@ func createTestCase(template string, args ...interface{}) testCase {
 	expectedArgs := make([]interface{}, len(args))
 	for i := range args {
 		expectedArgs[i] = filteredString
+	}
+
+	return testCase{
+		Input:    fmt.Sprintf(template, args...),
+		Expected: fmt.Sprintf(template, expectedArgs...),
+	}
+}
+
+func createTestCaseWithReplacer(replacer MatchReplacer, template string, args ...interface{}) testCase {
+	expectedArgs := make([]interface{}, len(args))
+	for i := range args {
+		expectedArgs[i] = replacer(args[i].(string))
 	}
 
 	return testCase{
