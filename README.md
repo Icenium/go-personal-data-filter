@@ -87,7 +87,7 @@ import (
 
 func main() {
 	f, err := filter.NewBuilder().
-		WithMask(`¯\_(:|)_/¯`).
+		SetMask(`¯\_(:|)_/¯`).
 		Build()
 	if err != nil {
 		panic(err)

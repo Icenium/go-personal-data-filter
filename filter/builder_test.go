@@ -48,7 +48,7 @@ func TestPersonalDataFilterBuilder(t *testing.T) {
 
 				So(res, ShouldResemble, pd{MyProp: "test", Email: ""})
 			})
-			Convey("Should fail the build if it's used after WithAdditionalRegularExpression.", func() {
+			Convey("Should fail the build if it's used after AddRegularExpressions.", func() {
 				_, err := NewBuilder().
 					AddRegularExpressions("some").
 					SetRegExp(testRegExp).
@@ -74,7 +74,7 @@ func TestPersonalDataFilterBuilder(t *testing.T) {
 
 				So(res, ShouldResemble, pd{MyProp: "test", Email: ""})
 			})
-			Convey("Should fail the build if it's used after WithRegExp.", func() {
+			Convey("Should fail the build if it's used after SetRegExp.", func() {
 				_, err := NewBuilder().
 					SetRegExp(testRegExp).
 					AddRegularExpressions("some").
@@ -100,7 +100,7 @@ func TestPersonalDataFilterBuilder(t *testing.T) {
 
 				So(res, ShouldResemble, pd{MyProp: "", Email: "not-personal"})
 			})
-			Convey("Should fail the build if it's used after WithAdditionalPersonalDataProperties.", func() {
+			Convey("Should fail the build if it's used after AddPersonalDataProperties.", func() {
 				_, err := NewBuilder().
 					AddPersonalDataProperties("some").
 					SetPersonalDataProperties("prop").
@@ -126,7 +126,7 @@ func TestPersonalDataFilterBuilder(t *testing.T) {
 
 				So(res, ShouldResemble, pd{MyProp: "", Email: ""})
 			})
-			Convey("Should fail the build if it's used after WithPersonalDataProperties.", func() {
+			Convey("Should fail the build if it's used after SetPersonalDataProperties.", func() {
 				_, err := NewBuilder().
 					SetPersonalDataProperties("prop").
 					AddPersonalDataProperties("some").

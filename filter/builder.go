@@ -23,8 +23,8 @@ const (
 var (
 	personalDataProperties = []string{"email", "useremail", "user", "username", "userid", "accountid", "account", "password", "pass", "pwd", "ip", "ipaddress"}
 
-	errRegExpAndAdditionalRegExp   = errors.New("can't use WithAdditionalRegularExpressions and WithRegExp at the same time")
-	errPDPropsAndAdditionalPDProps = errors.New("can't use WithPersonalDataProperties and WithAdditionalPersonalDataProperties at the same time")
+	errRegExpAndAdditionalRegExp   = errors.New("can't use AddRegularExpressions and SetRegExp at the same time")
+	errPDPropsAndAdditionalPDProps = errors.New("can't use SetPersonalDataProperties and AddPersonalDataProperties at the same time")
 )
 
 // PersonalDataFilterBuilder builds personal data filter
