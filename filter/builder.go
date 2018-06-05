@@ -25,8 +25,6 @@ var (
 
 	errRegExpAndAdditionalRegExp   = errors.New("can't use WithAdditionalRegularExpressions and WithRegExp at the same time")
 	errPDPropsAndAdditionalPDProps = errors.New("can't use WithPersonalDataProperties and WithAdditionalPersonalDataProperties at the same time")
-	errCantAddDefaultMatchReplacer = errors.New("can't add default match replacer after a custom one is set")
-	errCantAddCustomMatchReplacer  = errors.New("can't add custom match replacer after the default one is set")
 )
 
 // PersonalDataFilterBuilder builds personal data filter
@@ -37,13 +35,12 @@ type PersonalDataFilterBuilder struct {
 	additionalRegExps                []string
 	personalDataProperties           []string
 	additionalPersonalDataProperties []string
-	matchReplacer                    *MatchReplacer
-	defaultMatchReplacer             *MatchReplacer
+	matchFilterFunc                  *MatchFilterFunc
 	err                              error
 }
 
-// WithMask sets the mask string which will be used to replace the personal data.
-func (b *PersonalDataFilterBuilder) WithMask(mask string) *PersonalDataFilterBuilder {
+// SetMask sets the mask string which will be used to replace the personal data.
+func (b *PersonalDataFilterBuilder) SetMask(mask string) *PersonalDataFilterBuilder {
 	if b.err != nil {
 		return b
 	}
@@ -52,8 +49,8 @@ func (b *PersonalDataFilterBuilder) WithMask(mask string) *PersonalDataFilterBui
 	return b
 }
 
-// WithRegExp sets the regular expression which will be used to search for personal data.
-func (b *PersonalDataFilterBuilder) WithRegExp(regExp *regexp.Regexp) *PersonalDataFilterBuilder {
+// SetRegExp sets the regular expression which will be used to search for personal data.
+func (b *PersonalDataFilterBuilder) SetRegExp(regExp *regexp.Regexp) *PersonalDataFilterBuilder {
 	if b.err != nil {
 		return b
 	}
@@ -67,9 +64,9 @@ func (b *PersonalDataFilterBuilder) WithRegExp(regExp *regexp.Regexp) *PersonalD
 	return b
 }
 
-// WithAdditionalRegularExpressions adds more regular expressions to the default ones for
+// AddRegularExpressions adds more regular expressions to the default ones for
 // searching for personal data.
-func (b *PersonalDataFilterBuilder) WithAdditionalRegularExpressions(additionalRegExps ...string) *PersonalDataFilterBuilder {
+func (b *PersonalDataFilterBuilder) AddRegularExpressions(additionalRegExps ...string) *PersonalDataFilterBuilder {
 	if b.err != nil {
 		return b
 	}
@@ -83,8 +80,8 @@ func (b *PersonalDataFilterBuilder) WithAdditionalRegularExpressions(additionalR
 	return b
 }
 
-// WithPersonalDataProperties sets the personal data properties which will be used when filtering structs and maps.
-func (b *PersonalDataFilterBuilder) WithPersonalDataProperties(props ...string) *PersonalDataFilterBuilder {
+// SetPersonalDataProperties sets the personal data properties which will be used when filtering structs and maps.
+func (b *PersonalDataFilterBuilder) SetPersonalDataProperties(props ...string) *PersonalDataFilterBuilder {
 	if b.err != nil {
 		return b
 	}
@@ -98,9 +95,9 @@ func (b *PersonalDataFilterBuilder) WithPersonalDataProperties(props ...string) 
 	return b
 }
 
-// WithAdditionalPersonalDataProperties sets the personal data properties which will be
+// AddPersonalDataProperties sets the personal data properties which will be
 // added to the default ones for filtering structs and maps.
-func (b *PersonalDataFilterBuilder) WithAdditionalPersonalDataProperties(props ...string) *PersonalDataFilterBuilder {
+func (b *PersonalDataFilterBuilder) AddPersonalDataProperties(props ...string) *PersonalDataFilterBuilder {
 	if b.err != nil {
 		return b
 	}
@@ -114,37 +111,23 @@ func (b *PersonalDataFilterBuilder) WithAdditionalPersonalDataProperties(props .
 	return b
 }
 
-// WithMatchReplacer sets the match replacer of the filter.
-func (b *PersonalDataFilterBuilder) WithMatchReplacer(replacer MatchReplacer) *PersonalDataFilterBuilder {
+// SetMatchFilterFunc sets the function which will be used to replace each regular expression match.
+func (b *PersonalDataFilterBuilder) SetMatchFilterFunc(filter MatchFilterFunc) *PersonalDataFilterBuilder {
 	if b.err != nil {
 		return b
 	}
 
-	if b.defaultMatchReplacer != nil {
-		b.err = errCantAddCustomMatchReplacer
-		return b
-	}
-
-	b.matchReplacer = &replacer
+	b.matchFilterFunc = &filter
 	return b
 }
 
-// WithDefaultMatchReplacer sets the match replacer of the filter to the default one.
-func (b *PersonalDataFilterBuilder) WithDefaultMatchReplacer() *PersonalDataFilterBuilder {
-	if b.err != nil {
-		return b
-	}
-
-	if b.matchReplacer != nil {
-		b.err = errCantAddDefaultMatchReplacer
-		return b
-	}
-
-	var defaultReplacer MatchReplacer = func(match string) (replaced string) {
+// UseDefaultMatchFilterFunc sets the function which will be used to replace each regular expression match
+// to the default one - sha256 sum.
+func (b *PersonalDataFilterBuilder) UseDefaultMatchFilterFunc() *PersonalDataFilterBuilder {
+	defaultFilterFunction := func(match string) (replaced string) {
 		return fmt.Sprintf("%x", sha256.Sum256([]byte(match)))
 	}
-	b.defaultMatchReplacer = &defaultReplacer
-	return b
+	return b.SetMatchFilterFunc(defaultFilterFunction)
 }
 
 // Build creates new personal data filter from the provided configuration.
@@ -186,13 +169,7 @@ func (b *PersonalDataFilterBuilder) Build() (PersonalDataFilter, error) {
 		res.personalDataProperties = append(personalDataProperties, b.additionalPersonalDataProperties...)
 	}
 
-	// Handle match replacer config
-	if b.defaultMatchReplacer != nil {
-		res.matchReplacer = b.defaultMatchReplacer
-	} else if b.matchReplacer != nil {
-		res.matchReplacer = b.matchReplacer
-	}
-
+	res.matchFilterFunc = b.matchFilterFunc
 	return res, nil
 }
 

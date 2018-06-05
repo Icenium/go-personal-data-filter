@@ -17,7 +17,7 @@ type someData struct {
 
 func Example() {
 	f, err := filter.NewBuilder().
-		WithMask("*****").
+		SetMask("*****").
 		Build()
 	if err != nil {
 		panic(err)

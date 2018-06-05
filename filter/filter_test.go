@@ -93,7 +93,7 @@ func TestPersonalDataFilter(t *testing.T) {
 
 	Convey("RemovePersonalData", t, func() {
 		filter, err := NewBuilder().
-			WithMask(filteredString).
+			SetMask(filteredString).
 			Build()
 		if err != nil {
 			panic(err)
@@ -179,7 +179,7 @@ func TestPersonalDataFilter(t *testing.T) {
 					createTestCaseWithReplacer(getHash, "text%stext", ipV6),
 				}
 
-				hashFilter, _ := NewBuilder().WithDefaultMatchReplacer().Build()
+				hashFilter, _ := NewBuilder().UseDefaultMatchFilterFunc().Build()
 				checkTestCases(hashFilter, testCases)
 			})
 		})
@@ -396,7 +396,7 @@ func createTestCase(template string, args ...interface{}) testCase {
 	}
 }
 
-func createTestCaseWithReplacer(replacer MatchReplacer, template string, args ...interface{}) testCase {
+func createTestCaseWithReplacer(replacer MatchFilterFunc, template string, args ...interface{}) testCase {
 	expectedArgs := make([]interface{}, len(args))
 	for i := range args {
 		expectedArgs[i] = replacer(args[i].(string))

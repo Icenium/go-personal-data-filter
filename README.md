@@ -51,7 +51,7 @@ type someData struct {
 
 func main() {
 	f, err := filter.NewBuilder().
-		WithMask("*****").
+		SetMask("*****").
 		Build()
 	if err != nil {
 		panic(err)
@@ -108,7 +108,7 @@ import (
 
 func main() {
 	f, err := filter.NewBuilder().
-		WithPersonalDataProperties(`myprop`). // override all default personal data properties.
+		SetPersonalDataProperties(`myprop`). // override all default personal data properties.
 		Build()
 	if err != nil {
 		panic(err)
@@ -136,7 +136,7 @@ import (
 
 func main() {
 	f, err := filter.NewBuilder().
-		WithAdditionalPersonalDataProperties(`myprop`).
+		AddPersonalDataProperties(`myprop`).
 		Build()
 	if err != nil {
 		panic(err)
@@ -166,7 +166,7 @@ import (
 
 func main() {
 	f, err := filter.NewBuilder().
-		WithRegExp(regexp.MustCompile(`\-.*`)). // override all default regular expressions.
+		SetRegExp(regexp.MustCompile(`\-.*`)). // override all default regular expressions.
 		Build()
 	if err != nil {
 		panic(err)
@@ -195,7 +195,7 @@ import (
 
 func main() {
 	f, err := filter.NewBuilder().
-		WithAdditionalRegularExpressions(`\-.*`).
+		AddRegularExpressions(`\-.*`).
 		Build()
 	if err != nil {
 		panic(err)
@@ -212,3 +212,61 @@ func main() {
 	fmt.Println(f.RemovePersonalData(input))
 }
 ```
+- Match filter function:
+```Go
+package main
+
+import (
+	"fmt"
+	"regexp"
+
+	"github.com/Icenium/go-personal-data-filter/filter"
+)
+
+func main() {
+	f, err := filter.NewBuilder().
+		UseDefaultMatchFilterFunc(). // use the default match filter function to the default one - sha256 sum.
+		Build()
+	if err != nil {
+		panic(err)
+	}
+
+	input := struct {
+		Personal string
+		MyProp   string
+	}{
+		Personal: "email@mail.com", // will be replaced and the result will be sha256 hash
+		MyProp:   "not-personal",   // will not be replaced
+	}
+	fmt.Printf("%#v\n", f.RemovePersonalData(input))
+}
+```
+```Go
+package main
+
+import (
+	"fmt"
+	"regexp"
+
+	"github.com/Icenium/go-personal-data-filter/filter"
+)
+
+func main() {
+	f, err := filter.NewBuilder().
+		SetMatchFilterFunc(func(input string) string { return input + "-replaced" }).
+		Build()
+	if err != nil {
+		panic(err)
+	}
+
+	input := struct {
+		Personal string
+		MyProp   string
+	}{
+		Personal: "email@mail.com", // will be replaced and the result will be email@mail.com-replaced
+		MyProp:   "not-personal",   // will not be replaced
+	}
+	fmt.Printf("%#v\n", f.RemovePersonalData(input))
+}
+```
+

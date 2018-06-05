@@ -7,9 +7,9 @@ type PersonalDataFilter interface {
 	RemovePersonalData(input interface{}) interface{}
 }
 
-// MatchReplacer is function which will be used to replace each match found by some
+// MatchFilterFunc is function which will be used to replace each match found by some
 // of the registered regular expressions.
-type MatchReplacer func(match string) (replaced string)
+type MatchFilterFunc func(match string) (replaced string)
 
 type filterTagConfig struct {
 	NoFilter bool

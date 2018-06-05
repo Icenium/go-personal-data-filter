@@ -18,10 +18,10 @@ func TestPersonalDataFilterBuilder(t *testing.T) {
 		testRegExp := regexp.MustCompile(`\-.*`)
 		i := pd{MyProp: testRegExpString, Email: "not-personal"}
 
-		Convey("WithMask", func() {
+		Convey("SetMask", func() {
 			Convey("Should set the filter mask correctly.", func() {
 				mask := `¯\_(:|)_/¯`
-				f, err := NewBuilder().WithMask(mask).Build()
+				f, err := NewBuilder().SetMask(mask).Build()
 
 				So(err, ShouldBeNil)
 
@@ -33,14 +33,14 @@ func TestPersonalDataFilterBuilder(t *testing.T) {
 				mask := `¯\_(:|)_/¯`
 				b := NewBuilder()
 				b.err = errPDPropsAndAdditionalPDProps
-				b = b.WithMask(mask)
+				b = b.SetMask(mask)
 				So(b.mask, ShouldEqual, "")
 			})
 		})
 
-		Convey("WithRegExp", func() {
+		Convey("SetRegExp", func() {
 			Convey("Should use the provided regular expression.", func() {
-				f, err := NewBuilder().WithRegExp(testRegExp).Build()
+				f, err := NewBuilder().SetRegExp(testRegExp).Build()
 
 				So(err, ShouldBeNil)
 
@@ -50,8 +50,8 @@ func TestPersonalDataFilterBuilder(t *testing.T) {
 			})
 			Convey("Should fail the build if it's used after WithAdditionalRegularExpression.", func() {
 				_, err := NewBuilder().
-					WithAdditionalRegularExpressions("some").
-					WithRegExp(testRegExp).
+					AddRegularExpressions("some").
+					SetRegExp(testRegExp).
 					Build()
 
 				So(err, ShouldBeError, errRegExpAndAdditionalRegExp)
@@ -59,14 +59,14 @@ func TestPersonalDataFilterBuilder(t *testing.T) {
 			Convey("Should not set reg exp if there is builder error.", func() {
 				b := NewBuilder()
 				b.err = errPDPropsAndAdditionalPDProps
-				b = b.WithRegExp(testRegExp)
+				b = b.SetRegExp(testRegExp)
 				So(b.regExp, ShouldBeNil)
 			})
 		})
 
-		Convey("WithAdditionalRegularExpression", func() {
+		Convey("AddRegularExpressions", func() {
 			Convey("Should use the provided regular expression.", func() {
-				f, err := NewBuilder().WithAdditionalRegularExpressions(testRegExp.String()).Build()
+				f, err := NewBuilder().AddRegularExpressions(testRegExp.String()).Build()
 
 				So(err, ShouldBeNil)
 
@@ -76,8 +76,8 @@ func TestPersonalDataFilterBuilder(t *testing.T) {
 			})
 			Convey("Should fail the build if it's used after WithRegExp.", func() {
 				_, err := NewBuilder().
-					WithRegExp(testRegExp).
-					WithAdditionalRegularExpressions("some").
+					SetRegExp(testRegExp).
+					AddRegularExpressions("some").
 					Build()
 
 				So(err, ShouldBeError, errRegExpAndAdditionalRegExp)
@@ -85,14 +85,14 @@ func TestPersonalDataFilterBuilder(t *testing.T) {
 			Convey("Should not add reg exp if there is builder error.", func() {
 				b := NewBuilder()
 				b.err = errPDPropsAndAdditionalPDProps
-				b = b.WithAdditionalRegularExpressions("some")
+				b = b.AddRegularExpressions("some")
 				So(b.additionalRegExps, ShouldHaveLength, 0)
 			})
 		})
 
-		Convey("WithPersonalDataProperties", func() {
+		Convey("SetPersonalDataProperties", func() {
 			Convey("Should use the provided personal data properties.", func() {
-				f, err := NewBuilder().WithPersonalDataProperties("myprop").Build()
+				f, err := NewBuilder().SetPersonalDataProperties("myprop").Build()
 
 				So(err, ShouldBeNil)
 
@@ -102,8 +102,8 @@ func TestPersonalDataFilterBuilder(t *testing.T) {
 			})
 			Convey("Should fail the build if it's used after WithAdditionalPersonalDataProperties.", func() {
 				_, err := NewBuilder().
-					WithAdditionalPersonalDataProperties("some").
-					WithPersonalDataProperties("prop").
+					AddPersonalDataProperties("some").
+					SetPersonalDataProperties("prop").
 					Build()
 
 				So(err, ShouldBeError, errPDPropsAndAdditionalPDProps)
@@ -111,14 +111,14 @@ func TestPersonalDataFilterBuilder(t *testing.T) {
 			Convey("Should not set personal data properties if there is builder error.", func() {
 				b := NewBuilder()
 				b.err = errPDPropsAndAdditionalPDProps
-				b = b.WithPersonalDataProperties("some")
+				b = b.SetPersonalDataProperties("some")
 				So(b.personalDataProperties, ShouldHaveLength, 0)
 			})
 		})
 
-		Convey("WithAdditionalPersonalDataProperties", func() {
+		Convey("AddPersonalDataProperties", func() {
 			Convey("Should use the provided personal data properties.", func() {
-				f, err := NewBuilder().WithAdditionalPersonalDataProperties("myprop").Build()
+				f, err := NewBuilder().AddPersonalDataProperties("myprop").Build()
 
 				So(err, ShouldBeNil)
 
@@ -128,8 +128,8 @@ func TestPersonalDataFilterBuilder(t *testing.T) {
 			})
 			Convey("Should fail the build if it's used after WithPersonalDataProperties.", func() {
 				_, err := NewBuilder().
-					WithPersonalDataProperties("prop").
-					WithAdditionalPersonalDataProperties("some").
+					SetPersonalDataProperties("prop").
+					AddPersonalDataProperties("some").
 					Build()
 
 				So(err, ShouldBeError, errPDPropsAndAdditionalPDProps)
@@ -137,14 +137,14 @@ func TestPersonalDataFilterBuilder(t *testing.T) {
 			Convey("Should not add personal data properties if there is builder error.", func() {
 				b := NewBuilder()
 				b.err = errPDPropsAndAdditionalPDProps
-				b = b.WithAdditionalPersonalDataProperties("some")
+				b = b.AddPersonalDataProperties("some")
 				So(b.additionalPersonalDataProperties, ShouldHaveLength, 0)
 			})
 		})
 
-		Convey("WithDefaultMatchReplacer", func() {
+		Convey("UseDefaultMatchFilterFunc", func() {
 			Convey("Should set the default match replacer.", func() {
-				f, err := NewBuilder().WithDefaultMatchReplacer().Build()
+				f, err := NewBuilder().UseDefaultMatchFilterFunc().Build()
 
 				So(err, ShouldBeNil)
 
@@ -152,26 +152,12 @@ func TestPersonalDataFilterBuilder(t *testing.T) {
 
 				So(res, ShouldResemble, "3d13579f08e876d2d2d94da15ea657fb39795dd2a59e3378c9e58c4f4b0d053b")
 			})
-			Convey("Should fail if there is custom match replacer set.", func() {
-				_, err := NewBuilder().
-					WithMatchReplacer(func(string) string { return "" }).
-					WithDefaultMatchReplacer().
-					Build()
-
-				So(err, ShouldBeError, errCantAddDefaultMatchReplacer)
-			})
-			Convey("Should not add the default match replacer if there is builder error.", func() {
-				b := NewBuilder()
-				b.err = errCantAddDefaultMatchReplacer
-				b = b.WithDefaultMatchReplacer()
-				So(b.defaultMatchReplacer, ShouldBeNil)
-			})
 		})
 
-		Convey("WithMatchReplacer", func() {
+		Convey("SetMatchFilterFunc", func() {
 			Convey("Should set the custom match replacer.", func() {
 				expected := "expected"
-				f, err := NewBuilder().WithMatchReplacer(func(string) string { return expected }).Build()
+				f, err := NewBuilder().SetMatchFilterFunc(func(string) string { return expected }).Build()
 
 				So(err, ShouldBeNil)
 
@@ -179,19 +165,11 @@ func TestPersonalDataFilterBuilder(t *testing.T) {
 
 				So(res, ShouldResemble, expected)
 			})
-			Convey("Should fail if the default match replacer set.", func() {
-				_, err := NewBuilder().
-					WithDefaultMatchReplacer().
-					WithMatchReplacer(func(string) string { return "" }).
-					Build()
-
-				So(err, ShouldBeError, errCantAddCustomMatchReplacer)
-			})
 			Convey("Should not add the custom match replacer if there is builder error.", func() {
 				b := NewBuilder()
-				b.err = errCantAddDefaultMatchReplacer
-				b = b.WithMatchReplacer(func(string) string { return "" })
-				So(b.matchReplacer, ShouldBeNil)
+				b.err = errPDPropsAndAdditionalPDProps
+				b = b.SetMatchFilterFunc(func(string) string { return "" })
+				So(b.matchFilterFunc, ShouldBeNil)
 			})
 		})
 	})
