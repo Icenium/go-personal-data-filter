@@ -9,7 +9,7 @@ import (
 
 func ExampleNewBuilder() {
 	f, err := filter.NewBuilder().
-		WithMask(`¯\_(:|)_/¯`).
+		SetMask(`¯\_(:|)_/¯`).
 		Build()
 	if err != nil {
 		panic(err)
@@ -20,9 +20,9 @@ func ExampleNewBuilder() {
 	// ¯\_(:|)_/¯
 }
 
-func ExamplePersonalDataFilterBuilder_WithPersonalDataProperties() {
+func ExamplePersonalDataFilterBuilder_SetPersonalDataProperties() {
 	f, err := filter.NewBuilder().
-		WithPersonalDataProperties(`myprop`).
+		SetPersonalDataProperties(`myprop`).
 		Build()
 	if err != nil {
 		panic(err)
@@ -41,9 +41,9 @@ func ExamplePersonalDataFilterBuilder_WithPersonalDataProperties() {
 	// struct { Email string; MyProp string }{Email:"not-personal", MyProp:""}
 }
 
-func ExamplePersonalDataFilterBuilder_WithAdditionalPersonalDataProperties() {
+func ExamplePersonalDataFilterBuilder_AddPersonalDataProperties() {
 	f, err := filter.NewBuilder().
-		WithAdditionalPersonalDataProperties(`myprop`).
+		AddPersonalDataProperties(`myprop`).
 		Build()
 	if err != nil {
 		panic(err)
@@ -61,9 +61,9 @@ func ExamplePersonalDataFilterBuilder_WithAdditionalPersonalDataProperties() {
 	// struct { Email string; MyProp string }{Email:"", MyProp:""}
 }
 
-func ExamplePersonalDataFilterBuilder_WithRegExp() {
+func ExamplePersonalDataFilterBuilder_SetRegExp() {
 	f, err := filter.NewBuilder().
-		WithRegExp(regexp.MustCompile(`\-.*`)). // override all default regular expressions.
+		SetRegExp(regexp.MustCompile(`\-.*`)). // override all default regular expressions.
 		Build()
 	if err != nil {
 		panic(err)
@@ -81,9 +81,9 @@ func ExamplePersonalDataFilterBuilder_WithRegExp() {
 	// struct { Personal string; MyProp string }{Personal:"some@mail.com", MyProp:"not"}
 }
 
-func ExamplePersonalDataFilterBuilder_WithAdditionalRegularExpressions() {
+func ExamplePersonalDataFilterBuilder_AddRegularExpressions() {
 	f, err := filter.NewBuilder().
-		WithAdditionalRegularExpressions(`\-.*`).
+		AddRegularExpressions(`\-.*`).
 		Build()
 	if err != nil {
 		panic(err)
@@ -99,4 +99,44 @@ func ExamplePersonalDataFilterBuilder_WithAdditionalRegularExpressions() {
 	fmt.Printf("%#v\n", f.RemovePersonalData(input))
 	// Output:
 	// struct { Personal string; MyProp string }{Personal:"", MyProp:"not"}
+}
+
+func ExamplePersonalDataFilterBuilder_UseDefaultMatchFilterFunc() {
+	f, err := filter.NewBuilder().
+		UseDefaultMatchFilterFunc().
+		Build()
+	if err != nil {
+		panic(err)
+	}
+
+	input := struct {
+		Personal string
+		MyProp   string
+	}{
+		Personal: "email@mail.com", // will be replaced and the result will be sha256 hash
+		MyProp:   "not-personal",   // will not be replaced
+	}
+	fmt.Printf("%#v\n", f.RemovePersonalData(input))
+	// Output:
+	// struct { Personal string; MyProp string }{Personal:"3d13579f08e876d2d2d94da15ea657fb39795dd2a59e3378c9e58c4f4b0d053b", MyProp:"not-personal"}
+}
+
+func ExamplePersonalDataFilterBuilder_SetMatchFilterFunc() {
+	f, err := filter.NewBuilder().
+		SetMatchFilterFunc(func(input string) string { return input + "-replaced" }).
+		Build()
+	if err != nil {
+		panic(err)
+	}
+
+	input := struct {
+		Personal string
+		MyProp   string
+	}{
+		Personal: "email@mail.com", // will be replaced and the result will be email@mail.com-replaced
+		MyProp:   "not-personal",   // will not be replaced
+	}
+	fmt.Printf("%#v\n", f.RemovePersonalData(input))
+	// Output:
+	// struct { Personal string; MyProp string }{Personal:"email@mail.com-replaced", MyProp:"not-personal"}
 }

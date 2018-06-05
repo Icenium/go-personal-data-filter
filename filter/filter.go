@@ -14,6 +14,7 @@ const (
 
 type personalDataFilter struct {
 	mask                   string
+	matchFilterFunc        *MatchFilterFunc
 	personalDataRegExp     *regexp.Regexp
 	personalDataProperties []string
 }
@@ -55,7 +56,13 @@ func (filter *personalDataFilter) RemovePersonalData(input interface{}) interfac
 }
 
 func (filter *personalDataFilter) handleString(input interface{}) interface{} {
-	filtered := filter.personalDataRegExp.ReplaceAllString(input.(string), filter.mask)
+	var filtered string
+	if filter.matchFilterFunc != nil {
+		filtered = filter.personalDataRegExp.ReplaceAllStringFunc(input.(string), *filter.matchFilterFunc)
+	} else {
+		filtered = filter.personalDataRegExp.ReplaceAllString(input.(string), filter.mask)
+	}
+
 	return filtered
 }
 
